@@ -1,4 +1,4 @@
-# Prog2-Othello
+# Prog2-othello
 
 Project for Programming 2 class on FMF UNI-LJ.
 
