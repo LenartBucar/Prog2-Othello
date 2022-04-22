@@ -13,6 +13,9 @@ public class Igra {
 
     private final Player[][] board;
 
+    /**
+     * Contains all valid directions to allow streaks in.
+     */
     private final Direction[] allDirections = {
             new Direction(-1, -1),
             new Direction(-1, 0),
@@ -61,11 +64,23 @@ public class Igra {
         return true;
     }
 
-    private void flipSquare(int x, int y) {
+
+    /**
+     * Flips the colour of the given square
+     * @param x x-coordinate of the square to flip
+     * @param y y-coordinate of the square to flip
+     * @throws IllegalArgumentException if there is no token on the square yet
+     */
+    private void flipSquare(int x, int y) throws IllegalArgumentException{
         if (board[x][y] == null) {throw new IllegalArgumentException("Attempting to flip a non-flippable swuare");}
         board[x][y] = swapPlayer(board[x][y]);
     }
-    
+
+    /**
+     * Flips all squares in all valid streaks originating at the given square
+     * @param poteza Location where to start the flipping
+     * @param directions Direction and length of all valid streaks
+     */
     private void flipSquares(Poteza poteza, Map<Direction, Integer> directions) {
         for (Map.Entry<Direction, Integer> dir: directions.entrySet()) {
             Direction direction = dir.getKey();
