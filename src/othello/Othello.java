@@ -1,5 +1,6 @@
 package othello;
 
+import gui.Window;
 import logika.*;
 import splosno.Poteza;
 
@@ -7,10 +8,16 @@ import java.util.Scanner;
 
 public class Othello {
     public static void main(String[] args) {
-        play();
+        Igra game = new Igra();
+
+        Window window = new Window();
+        window.pack();
+        window.setVisible(true);
+        window.canvas.setGame(game);
+//        playText();
     }
 
-    public static void play() {
+    public static void playText() {
         Igra game = new Igra();
         Scanner in = new Scanner(System.in);
         System.out.println(game);

@@ -159,20 +159,6 @@ public class Igra {
     }
 }
 
-enum Player {
-    WHITE("O"), BLACK("X");
-    final String playerName;
-
-    Player(String playerName) {
-        this.playerName = playerName;
-    }
-
-    @Override
-    public String toString() {
-        return playerName;
-    }
-}
-
 class Direction {
     private final int stepX, stepY;
     private static final ArrayList<Integer> VALID_STEPS = new ArrayList<>(Arrays.asList(-1, 0, 1));
