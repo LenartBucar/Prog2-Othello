@@ -13,6 +13,8 @@ public class Igra {
 
     private final Player[][] board;
 
+    private Condition condition;
+
     /**
      * Contains all valid directions to allow streaks in.
      */
@@ -35,11 +37,16 @@ public class Igra {
         return board;
     }
 
+    public Condition getCondition(){
+        return condition;
+    }
+
     public Igra(int x, int y) {
         sizeX = x;
         sizeY = y;
         player = Player.BLACK;
         board = new Player[sizeX][sizeY];
+        condition = Condition.IN_PROGRESS;
         int cx = x/2 - 1;
         int cy = y/2 - 1;
         board[cx][cy] = board[cx + 1][cy + 1] = Player.WHITE;
@@ -61,7 +68,47 @@ public class Igra {
         flipSquares(poteza, directions);
         board[poteza.getX()][poteza.getY()] = player;
         player = swapPlayer(player);
+
+        Map<Poteza, HashMap<Direction, Integer>> possible = allPossible();
+        if (possible.isEmpty()) {
+            player = swapPlayer(player);
+            Map<Poteza, HashMap<Direction, Integer>> possible1 = allPossible();
+            if (possible1.isEmpty()) condition = winner();
+        }
         return true;
+    }
+
+    private Condition winner(){
+        int black = 0;
+        int white = 0;
+        for (int i = 0; i < sizeX; i++) {
+            for (int j = 0; j < sizeY; j++) {
+                if (board[i][j] == Player.BLACK) black += 1;
+                else if (board[i][j] == Player.WHITE) white += 1;
+            }
+        }
+        if (black < white) return Condition.WHITE_WINS;
+        else if (black > white) return Condition.BLACK_WINS;
+        else return Condition.DRAW;
+    }
+
+    /**
+     *
+     * @return all possible moves and which directions are valid for specific move
+     */
+    public Map<Poteza, HashMap<Direction, Integer>> allPossible(){
+        Map<Poteza, HashMap<Direction, Integer>> possible = new HashMap<>();
+        for (int i = 0; i < this.sizeX; i++) {
+            for (int j = 0; j < this.sizeY; j++) {
+                if (this.board[i][j] != null) continue;
+                else {
+                    Poteza p = new Poteza(i, j);
+                    HashMap<Direction, Integer> directions = getDirections(p);
+                    if (!directions.isEmpty()) possible.put(p, directions);
+                }
+            }
+        }
+        return possible;
     }
 
 
@@ -95,8 +142,8 @@ public class Igra {
      * @param poteza Played move
      * @return Map of all directions in which the streak is valid and the length of the streak
      */
-    private Map<Direction, Integer> getDirections(Poteza poteza) {
-        Map<Direction, Integer> distances = new HashMap<>();
+    private HashMap<Direction, Integer> getDirections(Poteza poteza) {
+        HashMap<Direction, Integer> distances = new HashMap<>();
         for (Direction direction: allDirections) {
             Integer d = checkDirection(poteza, direction);
             if (d != null && d != 0 ) {distances.put(direction, d);}
