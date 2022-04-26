@@ -72,7 +72,7 @@ public class Igra {
      * @throws IllegalArgumentException if there is no token on the square yet
      */
     private void flipSquare(int x, int y) throws IllegalArgumentException{
-        if (board[x][y] == null) {throw new IllegalArgumentException("Attempting to flip a non-flippable swuare");}
+        if (board[x][y] == null) {throw new IllegalArgumentException("Attempting to flip a non-flippable square");}
         board[x][y] = swapPlayer(board[x][y]);
     }
 
@@ -157,13 +157,21 @@ public class Igra {
         }
         return sb.toString();
     }
+
+    public Igra copyOf() {
+        Igra cp = new Igra(this.sizeX, this.sizeY);
+        for (int i = 0; i < this.board.length; i++) {
+            cp.board[i] = Arrays.copyOf(this.board[i], this.board[i].length);
+        }
+        return cp;
+    }
 }
 
 class Direction {
     private final int stepX, stepY;
     private static final ArrayList<Integer> VALID_STEPS = new ArrayList<>(Arrays.asList(-1, 0, 1));
     Direction(int x, int y) {
-        if (!VALID_STEPS.contains(x) && !VALID_STEPS.contains(y) || (x == 0 && y == 0)) {
+        if (!VALID_STEPS.contains(x) || !VALID_STEPS.contains(y) || (x == 0 && y == 0)) {
             throw new IllegalArgumentException("Invalid argument provided. X and Y must be from (-1, 0, 1) and not both 0");
         }
         stepX = x;

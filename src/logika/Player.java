@@ -20,4 +20,8 @@ public enum Player {
     public Color getColour() {
         return colour;
     }
+
+    public Player copyOf() {
+        return this;
+        };
 }
