@@ -13,7 +13,7 @@ public class Igra {
 
     private final Player[][] board;
 
-    private Condition condition;
+    public Status status;
 
     /**
      * Contains all valid directions to allow streaks in.
@@ -37,8 +37,8 @@ public class Igra {
         return board;
     }
 
-    public Condition getCondition(){
-        return condition;
+    public Status getStatus(){
+        return status;
     }
 
     public Igra(int x, int y) {
@@ -46,7 +46,7 @@ public class Igra {
         sizeY = y;
         player = Player.BLACK;
         board = new Player[sizeX][sizeY];
-        condition = Condition.IN_PROGRESS;
+        status = Status.IN_PROGRESS;
         int cx = x/2 - 1;
         int cy = y/2 - 1;
         board[cx][cy] = board[cx + 1][cy + 1] = Player.WHITE;
@@ -73,12 +73,27 @@ public class Igra {
         if (possible.isEmpty()) {
             player = swapPlayer(player);
             Map<Poteza, HashMap<Direction, Integer>> possible1 = allPossible();
-            if (possible1.isEmpty()) condition = winner();
+            if (possible1.isEmpty()) setWinner();
         }
         return true;
     }
 
-    private Condition winner(){
+    /**
+     * counts discs of each color and sets status to the right winner
+     */
+    private void setWinner(){
+        int[] count = count();
+        int black = count[0];
+        int white = count[1];
+        if (black < white) status = Status.WHITE_WINS;
+        else if (black > white) status = Status.BLACK_WINS;
+        else status = Status.DRAW;
+    }
+
+    /**
+     * @return array of numbers of black and white discs
+     */
+    private int[] count(){
         int black = 0;
         int white = 0;
         for (int i = 0; i < sizeX; i++) {
@@ -87,9 +102,7 @@ public class Igra {
                 else if (board[i][j] == Player.WHITE) white += 1;
             }
         }
-        if (black < white) return Condition.WHITE_WINS;
-        else if (black > white) return Condition.BLACK_WINS;
-        else return Condition.DRAW;
+        return new int[]{black, white};
     }
 
     /**
@@ -100,8 +113,7 @@ public class Igra {
         Map<Poteza, HashMap<Direction, Integer>> possible = new HashMap<>();
         for (int i = 0; i < this.sizeX; i++) {
             for (int j = 0; j < this.sizeY; j++) {
-                if (this.board[i][j] != null) continue;
-                else {
+                if (this.board[i][j] == null) {
                     Poteza p = new Poteza(i, j);
                     HashMap<Direction, Integer> directions = getDirections(p);
                     if (!directions.isEmpty()) possible.put(p, directions);
@@ -179,6 +191,7 @@ public class Igra {
         }
         return null;
     }
+    /*TODO: check why it doesn't flip some squares(on edges of board) */
 
     private Player swapPlayer(Player player) {
         if (player.equals(Player.BLACK)) return Player.WHITE;

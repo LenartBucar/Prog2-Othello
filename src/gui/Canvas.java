@@ -11,6 +11,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Stroke;
 import java.awt.event.*;
+import java.util.Set;
 import javax.swing.JPanel;
 
 public class Canvas extends JPanel implements MouseListener, MouseMotionListener, KeyListener {
@@ -95,6 +96,17 @@ public class Canvas extends JPanel implements MouseListener, MouseMotionListener
                         squareSize - 2*BORDER_BUFFER, squareSize - 2*BORDER_BUFFER);
             }
         }
+
+        g2.setColor(game.getPlayer().getColour());
+        Set<Poteza> possible = game.allPossible().keySet();
+        for (Poteza p: possible) {
+            g2.drawOval(boardStartX + p.getX() * squareSize + BORDER_BUFFER, boardStartY + p.getY() * squareSize + BORDER_BUFFER,
+                    squareSize - 2*BORDER_BUFFER, squareSize - 2*BORDER_BUFFER);
+        }
+
+        g2.setColor(Color.BLACK);
+        g2.drawString(game.getPlayer().toString(), boardStartX, boardEndY + 5 * BORDER_BUFFER);
+        g2.drawString(game.status.toString(), boardStartX + BORDER_BUFFER, boardEndY + 10 * BORDER_BUFFER);
     }
 
     @Override
@@ -163,6 +175,5 @@ public class Canvas extends JPanel implements MouseListener, MouseMotionListener
     @Override
     public void keyReleased(KeyEvent e) {
         if (this.game == null) return;
-
     }
 }
