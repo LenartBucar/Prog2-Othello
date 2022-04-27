@@ -1,41 +1,52 @@
 package gui;
 
+import coordinator.Coordinator;
+import coordinator.PlayerType;
 import logika.Igra;
+import logika.Player;
+import splosno.KdoIgra;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
+import java.util.EnumMap;
 
 public class Window extends JFrame implements ActionListener {
     public Canvas canvas;
-    private JLabel status;
+    public JLabel status;
+
+    private JMenuItem igraClovekRacunalnik;
+    private JMenuItem igraRacunalnikClovek;
+    private JMenuItem igraClovekClovek;
+    private JMenuItem igraRacunalnikRacunalnik;
 
     public Window() {
         this.setTitle("Othello");
-        this.setLayout(new GridBagLayout());
+        this.setLayout(new GridLayout());
 
-        this.canvas = new Canvas(1000, 1000);
-        GridBagConstraints canvas_layout = new GridBagConstraints();
-        canvas_layout.gridx = 0;
-        canvas_layout.gridy = 0;
-        canvas_layout.fill = GridBagConstraints.BOTH;
-        canvas_layout.weightx = 1.0;
-        canvas_layout.weighty = 1.0;
-        getContentPane().add(canvas, canvas_layout);
+        JPanel main = new JPanel();
+        main.setLayout(new BoxLayout(main, BoxLayout.Y_AXIS));
+        this.add(main);
+
+        canvas = new Canvas(1000, 1000);
+        main.add(canvas);
+
+        status = new JLabel();
+        status.setText("Nova igra!");
+        main.add(status);
 
 
         JMenuBar menuBar = new JMenuBar();
-        setJMenuBar(menuBar);
+        this.setJMenuBar(menuBar);
 
-        status = new JLabel();
-        GridBagConstraints status_layout = new GridBagConstraints();
-        status_layout.gridx = 0;
-        status_layout.gridy = 1;
-        getContentPane().add(status, status_layout);
-        status.setText("Nova igra!");
-        this.add(status);
+        JMenu gameMenu = addMenu(menuBar, "Nova igra");
+
+        igraClovekRacunalnik = addMenuItem(gameMenu, "Človek – računalnik");
+        igraRacunalnikClovek = addMenuItem(gameMenu, "Računalnik – človek");
+        igraClovekClovek = addMenuItem(gameMenu, "Človek – Človek");
+        igraRacunalnikRacunalnik = addMenuItem(gameMenu, "Računalnik – računalnik");
 
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -44,9 +55,11 @@ public class Window extends JFrame implements ActionListener {
     public void refreshGUI() {
         if (canvas.game == null) { status.setText("Nova igra!"); }
         else {
-            switch(canvas.game.getPlayer()) {
-                case WHITE: status.setText("Na vrsti je beli igralec!"); break;
-                case BLACK: status.setText("Na vrsti je črni igralec!"); break;
+            switch(canvas.game.status) {
+                case IN_PROGRESS: status.setText("Na potezi je " + canvas.game.getPlayer().toString()); break;
+                case DRAW: status.setText("Neodloceno!"); break;
+                case BLACK_WINS: status.setText("Zmaga črni igralec!"); break;
+                case WHITE_WINS: status.setText("Zmaga beli igralec!"); break;
             }
         }
         canvas.repaint();
@@ -78,7 +91,39 @@ public class Window extends JFrame implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Object source = e.getSource();
+        if (e.getSource() == igraClovekRacunalnik) {
+            Coordinator.playerTypeMap = new EnumMap<Player, PlayerType>(Player.class);
+            Coordinator.playerTypeMap.put(Player.BLACK, PlayerType.H);
+            Coordinator.playerTypeMap.put(Player.WHITE, PlayerType.C);
+            Coordinator.kdoIgra = new EnumMap<Player,KdoIgra>(Player.class);
+            Coordinator.kdoIgra.put(Player.BLACK, new KdoIgra("Človek"));
+            Coordinator.kdoIgra.put(Player.WHITE, new KdoIgra("Računalnik"));
+            Coordinator.playNewGame();
+        } else if (e.getSource() == igraRacunalnikClovek) {
+            Coordinator.playerTypeMap = new EnumMap<Player,PlayerType>(Player.class);
+            Coordinator.playerTypeMap.put(Player.BLACK, PlayerType.C);
+            Coordinator.playerTypeMap.put(Player.WHITE, PlayerType.H);
+            Coordinator.kdoIgra = new EnumMap<Player,KdoIgra>(Player.class);
+            Coordinator.kdoIgra.put(Player.BLACK, new KdoIgra("Računalnik"));
+            Coordinator.kdoIgra.put(Player.WHITE, new KdoIgra("Človek"));
+            Coordinator.playNewGame();
+        } else if (e.getSource() == igraClovekClovek) {
+            Coordinator.playerTypeMap = new EnumMap<Player,PlayerType>(Player.class);
+            Coordinator.playerTypeMap.put(Player.BLACK, PlayerType.H);
+            Coordinator.playerTypeMap.put(Player.WHITE, PlayerType.H);
+            Coordinator.kdoIgra = new EnumMap<Player,KdoIgra>(Player.class);
+            Coordinator.kdoIgra.put(Player.BLACK, new KdoIgra("Človek"));
+            Coordinator.kdoIgra.put(Player.WHITE, new KdoIgra("Človek"));
+            Coordinator.playNewGame();
+        } else if (e.getSource() == igraRacunalnikRacunalnik) {
+            Coordinator.playerTypeMap= new EnumMap<Player,PlayerType>(Player.class);
+            Coordinator.playerTypeMap.put(Player.BLACK, PlayerType.C);
+            Coordinator.playerTypeMap.put(Player.WHITE, PlayerType.C);
+            Coordinator.kdoIgra = new EnumMap<Player,KdoIgra>(Player.class);
+            Coordinator.kdoIgra.put(Player.BLACK, new KdoIgra("Računalnik"));
+            Coordinator.kdoIgra.put(Player.WHITE, new KdoIgra("Računalnik"));
+            Coordinator.playNewGame();
+        }
 
     }
 }

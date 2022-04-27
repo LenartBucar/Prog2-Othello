@@ -1,5 +1,6 @@
 package gui;
 
+import coordinator.Coordinator;
 import logika.Igra;
 import logika.Player;
 import splosno.Poteza;
@@ -112,13 +113,17 @@ public class Canvas extends JPanel implements MouseListener, MouseMotionListener
     @Override
     public void mouseClicked(MouseEvent e) {
         if (this.game == null) return;
-        int x = e.getX();
-        int y = e.getY();
-        if (x < boardStartX || x > boardEndX || y < boardStartY || y > boardEndY ) {return;}
-        int xField = (x - boardStartX) / squareSize;
-        int yField = (y - boardStartY) / squareSize;
-        game.odigraj(new Poteza(xField, yField));
-        repaint();
+        if (Coordinator.HumanTurn) {
+            int x = e.getX();
+            int y = e.getY();
+            if (x < boardStartX || x > boardEndX || y < boardStartY || y > boardEndY) {
+                return;
+            }
+            int xField = (x - boardStartX) / squareSize;
+            int yField = (y - boardStartY) / squareSize;
+            Coordinator.playHumanMove(new Poteza(xField, yField));
+            repaint();
+        }
     }
 
     @Override
