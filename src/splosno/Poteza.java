@@ -1,22 +1,6 @@
 package splosno;
 
-import java.util.Objects;
-
-public class Poteza {
-	private int x, y;
-
-	public Poteza(int x, int y) {
-		this.x = x;
-		this.y = y;
-	}
-
-	public int getX() {
-		return x;
-	}
-
-	public int getY() {
-		return y;
-	}
+public record Poteza(int x, int y) {
 
 	@Override
 	public String toString() {
@@ -29,10 +13,5 @@ public class Poteza {
 		if (o == null || this.getClass() != o.getClass()) return false;
 		Poteza k = (Poteza) o;
 		return this.x == k.x && this.y == k.y;
-	}
-
-	@Override
-	public int hashCode () {
-		return Objects.hash(this.x, this.y);
 	}
 }

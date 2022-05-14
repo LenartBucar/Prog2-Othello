@@ -3,7 +3,6 @@ package logika;
 import splosno.Poteza;
 
 import java.util.*;
-import java.util.logging.Logger;
 
 public class Igra {
     public final int sizeX, sizeY;
@@ -71,14 +70,20 @@ public class Igra {
         this(8, 8);
     }
 
+    /**
+     * Updates the current boundary of all tokens, in accordance with the last move made
+     * @param poteza Last Move
+     */
     public void updateBoundary(Poteza poteza) {
-        int x = poteza.getX();
-        int y = poteza.getY();
+        int x = poteza.x();
+        int y = poteza.y();
         for (int i = x - 1; i < x + 2; i++) {
             for (int j = y - 1; j < y + 2; j++) {
                 try {
                     if (board[i][j] == null) boundary.add(new Poteza(i, j));
-                } catch (ArrayIndexOutOfBoundsException ignored) {};
+                } catch (ArrayIndexOutOfBoundsException ignored) {
+                    // ignore out-of-bounds checks
+                }
             }
         }
         boundary.remove(poteza);
@@ -105,7 +110,7 @@ public class Igra {
         Map<Direction, Integer> directions = getDirections(poteza);
         if (directions.isEmpty()) {return false;}
         flipSquares(poteza, directions);
-        board[poteza.getX()][poteza.getY()] = player;
+        board[poteza.x()][poteza.y()] = player;
         player = swapPlayer(player);
         updateBoundary(poteza);
         return true;
@@ -173,27 +178,18 @@ public class Igra {
             Direction direction = dir.getKey();
             Integer distance = dir.getValue();
             for (int i = 1; i <= distance; i++) {
-                flipSquare(poteza.getX() + i*direction.getX(), poteza.getY() + i*direction.getY());
+                flipSquare(poteza.x() + i*direction.getX(), poteza.y() + i*direction.getY());
             }
         }
     }
-
-    public void debugSquare(Poteza poteza) {
-        getDirections(poteza, true);
-    }
-
-    private HashMap<Direction, Integer> getDirections(Poteza poteza) {
-        return getDirections(poteza, false);
-    }
-
     /**
      * @param poteza Played move
      * @return Map of all directions in which the streak is valid and the length of the streak
      */
-    private HashMap<Direction, Integer> getDirections(Poteza poteza, boolean debug) {
+    private HashMap<Direction, Integer> getDirections(Poteza poteza) {
         HashMap<Direction, Integer> distances = new HashMap<>();
         for (Direction direction: allDirections) {
-            Integer d = checkDirection(poteza, direction, debug);
+            Integer d = checkDirection(poteza, direction);
             if (d != null && d != 0 ) {distances.put(direction, d);}
         }
         return distances;
@@ -204,52 +200,36 @@ public class Igra {
      * @param direction direction in which to search
      * @return number of consecutive tokens of the opposite colour that end with a token of the same colour or `null` if given direction is not a valid streak
      */
-    private Integer checkDirection(Poteza poteza, Direction direction, boolean debug) {
+    private Integer checkDirection(Poteza poteza, Direction direction) {
         Player c;
         int dX = switch (direction.getX()) {
-            case -1 -> poteza.getX();
+            case -1 -> poteza.x();
             case 0 -> Integer.MAX_VALUE;
-            case 1 -> sizeX - poteza.getX();
+            case 1 -> sizeX - poteza.x();
             default -> throw new IllegalArgumentException("Step X must be of size -1, 0, or 1.");
         };
         int dY = switch (direction.getY()) {
-            case -1 -> poteza.getY();
+            case -1 -> poteza.y();
             case 0 -> Integer.MAX_VALUE;
-            case 1 -> sizeY - poteza.getY();
+            case 1 -> sizeY - poteza.y();
             default -> throw new IllegalArgumentException("Step Y must be of size -1, 0, or 1.");
         };
         int dist = Math.min(dX, dY);
-        if (debug) {
-            System.out.println("Checking location" + poteza + " in direction " + direction + " for a max distance " + dist);
-        }
         for (int i = 1; i <= dist; i++) {
-            int x = poteza.getX() + i*direction.getX();
-            int y = poteza.getY() + i*direction.getY();
+            int x = poteza.x() + i*direction.getX();
+            int y = poteza.y() + i*direction.getY();
             try {
                 c = board[x][y];
             } catch (IndexOutOfBoundsException ignored) {return null;}
-            if (debug) {
-                System.out.println("\t On coordinates ("+ x + "," + y + "), token: " + c + ". Player: " + player);
-            }
             if (c == null) {
-                if (debug) {
-                    System.out.println("Hit a blank square after " + i);
-                }
                 return null;
             }
             else if (c == player) {
-                if (debug) {
-                    System.out.println("Hit end of streak after " + i);
-                }
                 return i-1;
             }
         }
-        if (debug) {
-            System.out.println("Hit edge of the board");
-        }
         return null;
     }
-    /*TODO: check why it doesn't flip some squares(on edges of board) */
 
     public Player swapPlayer(Player player) {
         if (player.equals(Player.BLACK)) return Player.WHITE;
@@ -281,6 +261,10 @@ public class Igra {
         for (int i = 0; i < this.board.length; i++) {
             cp.board[i] = Arrays.copyOf(this.board[i], this.board[i].length);
         }
+        cp.player = player;
+        cp.boundary = boundary;
+        cp.possibleMoves = possibleMoves;
+        cp.status = status;
         return cp;
     }
 }
@@ -306,11 +290,9 @@ class Direction {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("Direction{");
-        sb.append("stepX=").append(stepX);
-        sb.append(", stepY=").append(stepY);
-        sb.append('}');
-        return sb.toString();
+        return "Direction{" + "stepX=" + stepX +
+                ", stepY=" + stepY +
+                '}';
     }
 }
 

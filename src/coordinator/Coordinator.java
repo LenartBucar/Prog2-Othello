@@ -32,25 +32,19 @@ public class Coordinator {
     public static void play () {
         window.refreshGUI();
         switch (game.status) {
-            case BLACK_WINS:
-            case WHITE_WINS:
-            case DRAW:
+            case BLACK_WINS, WHITE_WINS, DRAW:
                 return;
             case IN_PROGRESS:
                 Player player = game.getPlayer();
                 PlayerType playerType = playerTypeMap.get(player);
                 switch (playerType) {
-                    case C:
-                        playComputerMove();
-                        break;
-                    case H:
-                        HumanTurn = true;
-                        break;
+                    case C -> playComputerMove();
+                    case H -> HumanTurn = true;
                 }
         }
     }
 
-    private static Random random = new Random ();
+    private static Random random = new Random();
 /*
     public static void playComputerMove(Igra game) {
         Poteza[] possibleMoves = game.allPossible().keySet().toArray(new Poteza[0]);

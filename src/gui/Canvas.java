@@ -96,7 +96,7 @@ public class Canvas extends JPanel implements MouseListener, MouseMotionListener
         g2.setColor(game.getPlayer().getColour());
         Set<Poteza> possible = game.getPossibleMoves().keySet();
         for (Poteza p: possible) {
-            g2.drawOval(boardStartX + p.getX() * squareSize + BORDER_BUFFER, boardStartY + p.getY() * squareSize + BORDER_BUFFER,
+            g2.drawOval(boardStartX + p.x() * squareSize + BORDER_BUFFER, boardStartY + p.y() * squareSize + BORDER_BUFFER,
                     squareSize - 2*BORDER_BUFFER, squareSize - 2*BORDER_BUFFER);
         }
 
@@ -153,7 +153,6 @@ public class Canvas extends JPanel implements MouseListener, MouseMotionListener
     @Override
     public void mouseDragged(MouseEvent e) {
         if (this.game == null) return;
-
         repaint();
 
     }
@@ -180,9 +179,6 @@ public class Canvas extends JPanel implements MouseListener, MouseMotionListener
         int y = loc.y - origin.y;
         Poteza poteza = getPotezaFromCoord(x, y);
         if (poteza == null) {return;}
-        if (key == KeyEvent.VK_D) {
-            game.debugSquare(poteza);
-        }
         if (key == KeyEvent.VK_P) {
             game.player = game.swapPlayer(game.getPlayer());
             repaint();
@@ -194,7 +190,7 @@ public class Canvas extends JPanel implements MouseListener, MouseMotionListener
             default -> null;
         };
         if (p == null && e.getKeyCode() != KeyEvent.VK_X) {return;}
-        game.getBoard()[poteza.getX()][poteza.getY()] = p;
+        game.getBoard()[poteza.x()][poteza.y()] = p;
         game.updateBoundary(poteza);
         repaint();
     }
@@ -202,5 +198,6 @@ public class Canvas extends JPanel implements MouseListener, MouseMotionListener
     @Override
     public void keyReleased(KeyEvent e) {
         if (this.game == null) return;
+        repaint();
     }
 }
