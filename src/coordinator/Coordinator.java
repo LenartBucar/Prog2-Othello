@@ -74,7 +74,7 @@ public class Coordinator {
             @Override
             protected void done () {
                 if (game != zacetkaIgra) return;
-                Poteza[] possibleMoves = game.allPossible().keySet().toArray(new Poteza[0]);
+                Poteza[] possibleMoves = game.getPossibleMoves().keySet().toArray(new Poteza[0]);
                 int randomIndex = random.nextInt(possibleMoves.length);
                 Poteza poteza = possibleMoves[randomIndex];
                 game.odigraj(poteza);

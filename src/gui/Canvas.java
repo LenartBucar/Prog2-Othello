@@ -94,7 +94,7 @@ public class Canvas extends JPanel implements MouseListener, MouseMotionListener
         }
 
         g2.setColor(game.getPlayer().getColour());
-        Set<Poteza> possible = game.allPossible().keySet();
+        Set<Poteza> possible = game.getPossibleMoves().keySet();
         for (Poteza p: possible) {
             g2.drawOval(boardStartX + p.getX() * squareSize + BORDER_BUFFER, boardStartY + p.getY() * squareSize + BORDER_BUFFER,
                     squareSize - 2*BORDER_BUFFER, squareSize - 2*BORDER_BUFFER);
@@ -177,15 +177,16 @@ public class Canvas extends JPanel implements MouseListener, MouseMotionListener
         Point origin = this.getLocationOnScreen();
         int x = loc.x - origin.x;
         int y = loc.y - origin.y;
-        Poteza move = getPotezaFromCoord(x, y);
-        if (move == null) {return;}
+        Poteza poteza = getPotezaFromCoord(x, y);
+        if (poteza == null) {return;}
         Player p = switch (e.getKeyCode()) {
             case KeyEvent.VK_B -> Player.BLACK;
             case KeyEvent.VK_W -> Player.WHITE;
             default -> null;
         };
         if (p == null && e.getKeyCode() != KeyEvent.VK_X) {return;}
-        game.getBoard()[move.getX()][move.getY()] = p;
+        game.getBoard()[poteza.getX()][poteza.getY()] = p;
+        game.updateBoundary(poteza);
         repaint();
     }
 
