@@ -21,6 +21,10 @@ public final class TreeIndex {
 		for (Poteza q : ti.potList) this.potList.addLast(q);
 		this.potList.addLast(p);
 	}
+
+	public TreeIndex child(Poteza p) {
+		return new TreeIndex(this, p);
+	}
 	
 	public boolean isRoot() {
 		return potList.isEmpty();
