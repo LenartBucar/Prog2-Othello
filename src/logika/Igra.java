@@ -2,14 +2,13 @@ package logika;
 
 import splosno.Poteza;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class Igra {
     public final int sizeX, sizeY;
     private Player player;
+    public HashSet<Poteza> boundary;
+    public Map<Poteza, HashMap<Direction, Integer>> possible;
 
     private final Player[][] board;
 
@@ -41,6 +40,8 @@ public class Igra {
         return status;
     }
 
+    public HashSet<Poteza> getBoundary() {return boundary; }
+
     public Igra(int x, int y) {
         sizeX = x;
         sizeY = y;
@@ -51,6 +52,17 @@ public class Igra {
         int cy = y/2 - 1;
         board[cx][cy] = board[cx + 1][cy + 1] = Player.WHITE;
         board[cx][cy + 1] = board[cx + 1][cy] = Player.BLACK;
+        boundary  = new HashSet<>();
+        for (int i = cx - 1; i < cx + 3; i = i+3) {
+            for (int j = cy - 1; j < cy + 3; j++) {
+                boundary.add(new Poteza(i, j));
+            }
+        }
+        for (int i = cx; i < cx + 2; i++) {
+            for (int j = cy - 1; j < cy + 3; j = j + 3) {
+                boundary.add(new Poteza(i, j));
+            }
+        }
     }
 
     public Igra() {
@@ -62,19 +74,29 @@ public class Igra {
      * @return `true` if the move was successful, `false` if it was invalid
      */
     public boolean odigraj(Poteza poteza) {
-        if (board[poteza.getX()][poteza.getY()] != null) return false;
+        if (!boundary.contains(poteza)) return false;
         Map<Direction, Integer> directions = getDirections(poteza);
         if (directions.isEmpty()) {return false;}
         flipSquares(poteza, directions);
         board[poteza.getX()][poteza.getY()] = player;
         player = swapPlayer(player);
+        int x = poteza.getX();
+        int y = poteza.getY();
+        for (int i = x - 1; i < x + 2; i++) {
+            for (int j = y - 1; j < y + 2; j++) {
+                if (board[i][j] == null) boundary.add(new Poteza(i, j));
+            }
+        }
+        boundary.remove(poteza);
 
-        Map<Poteza, HashMap<Direction, Integer>> possible = allPossible();
-        if (possible.isEmpty()) {
+        Map<Poteza, HashMap<Direction, Integer>> newPossible = allPossible();
+        if (newPossible.isEmpty()) {
             player = swapPlayer(player);
             Map<Poteza, HashMap<Direction, Integer>> possible1 = allPossible();
             if (possible1.isEmpty()) setWinner();
+            else possible = possible1;
         }
+        else possible = newPossible;
         return true;
     }
 
@@ -111,14 +133,9 @@ public class Igra {
      */
     public Map<Poteza, HashMap<Direction, Integer>> allPossible(){
         Map<Poteza, HashMap<Direction, Integer>> possible = new HashMap<>();
-        for (int i = 0; i < this.sizeX; i++) {
-            for (int j = 0; j < this.sizeY; j++) {
-                if (this.board[i][j] == null) {
-                    Poteza p = new Poteza(i, j);
-                    HashMap<Direction, Integer> directions = getDirections(p);
-                    if (!directions.isEmpty()) possible.put(p, directions);
-                }
-            }
+        for (Poteza p: boundary) {
+            HashMap<Direction, Integer> directions = getDirections(p);
+            if (!directions.isEmpty()) possible.put(p, directions);
         }
         return possible;
     }
