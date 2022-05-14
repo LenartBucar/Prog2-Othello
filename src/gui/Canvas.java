@@ -5,12 +5,7 @@ import logika.Igra;
 import logika.Player;
 import splosno.Poteza;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Stroke;
+import java.awt.*;
 import java.awt.event.*;
 import java.util.Set;
 import javax.swing.JPanel;
@@ -110,18 +105,22 @@ public class Canvas extends JPanel implements MouseListener, MouseMotionListener
         g2.drawString(game.status.toString(), boardStartX + BORDER_BUFFER, boardEndY + 10 * BORDER_BUFFER);
     }
 
+    private Poteza getPotezaFromCoord(int x, int y) {
+        if (x < boardStartX || x > boardEndX || y < boardStartY || y > boardEndY) {
+            return null;
+        }
+        int xField = (x - boardStartX) / squareSize;
+        int yField = (y - boardStartY) / squareSize;
+        return new Poteza(xField, yField);
+    }
+
     @Override
     public void mouseClicked(MouseEvent e) {
         if (this.game == null) return;
         if (Coordinator.HumanTurn) {
             int x = e.getX();
             int y = e.getY();
-            if (x < boardStartX || x > boardEndX || y < boardStartY || y > boardEndY) {
-                return;
-            }
-            int xField = (x - boardStartX) / squareSize;
-            int yField = (y - boardStartY) / squareSize;
-            Coordinator.playHumanMove(new Poteza(xField, yField));
+            Coordinator.playHumanMove(getPotezaFromCoord(x, y));
             repaint();
         }
     }
@@ -174,6 +173,19 @@ public class Canvas extends JPanel implements MouseListener, MouseMotionListener
     @Override
     public void keyPressed(KeyEvent e) {
         if (this.game == null) return;
+        Point loc = MouseInfo.getPointerInfo().getLocation();
+        Point origin = this.getLocationOnScreen();
+        int x = loc.x - origin.x;
+        int y = loc.y - origin.y;
+        Poteza move = getPotezaFromCoord(x, y);
+        if (move == null) {return;}
+        Player p = switch (e.getKeyCode()) {
+            case KeyEvent.VK_B -> Player.BLACK;
+            case KeyEvent.VK_W -> Player.WHITE;
+            default -> null;
+        };
+        if (p == null && e.getKeyCode() != KeyEvent.VK_X) {return;}
+        game.getBoard()[move.getX()][move.getY()] = p;
         repaint();
     }
 
