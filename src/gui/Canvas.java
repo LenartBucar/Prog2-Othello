@@ -173,13 +173,22 @@ public class Canvas extends JPanel implements MouseListener, MouseMotionListener
     @Override
     public void keyPressed(KeyEvent e) {
         if (this.game == null) return;
+        int key = e.getKeyCode();
         Point loc = MouseInfo.getPointerInfo().getLocation();
         Point origin = this.getLocationOnScreen();
         int x = loc.x - origin.x;
         int y = loc.y - origin.y;
         Poteza poteza = getPotezaFromCoord(x, y);
         if (poteza == null) {return;}
-        Player p = switch (e.getKeyCode()) {
+        if (key == KeyEvent.VK_D) {
+            game.debugSquare(poteza);
+        }
+        if (key == KeyEvent.VK_P) {
+            game.player = game.swapPlayer(game.getPlayer());
+            repaint();
+            return;
+        }
+        Player p = switch (key) {
             case KeyEvent.VK_B -> Player.BLACK;
             case KeyEvent.VK_W -> Player.WHITE;
             default -> null;
