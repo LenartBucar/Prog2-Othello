@@ -2,6 +2,7 @@ package inteligenca;
 
 import com.sun.source.tree.Tree;
 import logika.Igra;
+import logika.Player;
 import logika.Status;
 import splosno.KdoIgra;
 import splosno.Poteza;
@@ -12,7 +13,8 @@ import java.util.*;
 public class Inteligenca extends KdoIgra {
 
     private static final String TEAMNAME = "IMEEKIPE";
-    private static final double C = Math.sqrt(2);
+    private static final double C = Math.sqrt(2); /* constant in UCT function */
+    private static final int n = 100; /* number of iterations */
 
     public HashMap<TreeIndex, TreeEntry> tree;
 
@@ -21,11 +23,22 @@ public class Inteligenca extends KdoIgra {
     }
 
     public Poteza izberiPotezo(Igra igra) {
-        return new Poteza(0, 0);
+        tree = new HashMap<TreeIndex, TreeEntry>();
+        TreeEntry startNode = new TreeEntry(igra);
+        TreeIndex startPath = new TreeIndex();
+        tree.put(startPath, startNode);
+        int i = 0;
+        while (i < n) {
+            traverse(startNode, startPath);
+            i++;
+        }
+        return bestMove(startPath, tree.get(startPath));
     }
 
 
-    private TreeEntry traverse(TreeEntry node, TreeIndex path){
+    private static Random random1 = new Random ();
+
+    private void traverse(TreeEntry node, TreeIndex path){
         if (fullyExpanded(node, path)) {
             double maxUCT = 0;
             TreeIndex maxPath = null;
@@ -40,16 +53,24 @@ public class Inteligenca extends KdoIgra {
                     maxPath = childPath;
                 }
             }
+            traverse(maxNode, maxPath);
         }
         else {
-            /*
-            Pick a random unexplored node
-             */
+            HashMap<TreeIndex, TreeEntry> unvisited = new HashMap<TreeIndex, TreeEntry>();
+            for (Map.Entry<TreeIndex, TreeEntry> child: children(path, node).entrySet()) {
+                if (!visited(child.getValue())) unvisited.put(child.getKey(), child.getValue());
+            }
+            int randomIndex = random1.nextInt(unvisited.size());
+            TreeIndex chosenPath = (TreeIndex) unvisited.keySet().toArray()[randomIndex];
+            TreeEntry chosenNode = unvisited.get(chosenPath);
+            Status result = rollout(chosenNode);
+            backpropagation(chosenPath, chosenNode, result);
         }
-        return node;
     }
-    /*TODO: traverse function */
 
+    private boolean visited(TreeEntry node){
+        return node.visits > 0;
+    }
 
     private boolean fullyExpanded(TreeEntry node, TreeIndex path){
         Set<Poteza> possibleMoves = node.game.possibleMoves.keySet();
@@ -70,25 +91,26 @@ public class Inteligenca extends KdoIgra {
      * update statistics for every node till root node
      * @param path list of moves to get to this node
      * @param node old node at the current path
-     * @param win whether the game resulted in a win
+     * @param status result of game: BLACK_WINS / WHITE_WINS / DRAW
      */
-    private void backpropagation(TreeIndex path, TreeEntry node, boolean win){
+    private void backpropagation(TreeIndex path, TreeEntry node, Status status){
         node.visits += 1;
-        if (win) node.wins += 1;
+        Player player = node.game.getPlayer();
+        if (player == Player.WHITE && status == Status.WHITE_WINS || player == Player.BLACK && status == Status.BLACK_WINS) node.wins += 1;
         if (tree.containsKey(path)) tree.replace(path, node);
         else tree.put(path, node);
         if (!path.isRoot()) {
             TreeIndex parentPath = path.parent();
             TreeEntry parentNode = tree.get(parentPath);
-            backpropagation(parentPath, parentNode, win);
+            backpropagation(parentPath, parentNode, status);
         }
     }
 
-    private static Random random = new Random ();
+    private static Random random2 = new Random ();
 
     private Poteza rolloutPolicy(Igra game){
         Set<Poteza> possibleMoves = game.possibleMoves.keySet();
-        int randomIndex = random.nextInt(possibleMoves.size());
+        int randomIndex = random2.nextInt(possibleMoves.size());
         return (Poteza) possibleMoves.toArray()[randomIndex];
     }
 
@@ -124,4 +146,24 @@ public class Inteligenca extends KdoIgra {
         }
         return children;
     }
+
+    /**
+     *
+     * @param path
+     * @param node
+     * @return move which was explored the most durint MCTS
+     */
+    private Poteza bestMove(TreeIndex path, TreeEntry node){
+        int maxVisits = 0;
+        TreeIndex maxPath = null;
+        for (Map.Entry<TreeIndex, TreeEntry> child: children(path, node).entrySet()) {
+            if (child.getValue().visits > maxVisits) {
+                maxPath = child.getKey();
+                maxVisits = child.getValue().visits;
+            }
+        }
+        assert maxPath != null;
+        return maxPath.lastMove();
+    }
+    /* TODO: what to do if maxPath == null */
 }

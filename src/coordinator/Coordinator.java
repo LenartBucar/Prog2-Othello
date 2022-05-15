@@ -1,6 +1,7 @@
 package coordinator;
 
 import gui.Window;
+import inteligenca.Inteligenca;
 import logika.Igra;
 import logika.Player;
 import splosno.KdoIgra;
@@ -57,7 +58,7 @@ public class Coordinator {
  */
 
     public static void playComputerMove() {
-        Igra zacetkaIgra = game;
+        Igra zacetnaIgra = game;
         SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() {
@@ -67,16 +68,18 @@ public class Coordinator {
             }
             @Override
             protected void done () {
-                if (game != zacetkaIgra) return;
+                if (game != zacetnaIgra) return;
                 Poteza[] possibleMoves = game.getPossibleMoves().keySet().toArray(new Poteza[0]);
                 int randomIndex = random.nextInt(possibleMoves.length);
                 Poteza poteza = possibleMoves[randomIndex];
+//                Poteza poteza = inteligenca.Inteligenca.izberiPotezo(game);
                 game.odigraj(poteza);
                 play();
             }
         };
         worker.execute();
     }
+    /* TODO: choose move based on MCTS */
 
     public static void playHumanMove(Poteza poteza) {
         if (game.odigraj(poteza)) HumanTurn = false;
