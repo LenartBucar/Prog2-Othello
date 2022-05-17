@@ -14,7 +14,7 @@ public class Inteligenca extends KdoIgra {
 
     private static final String TEAMNAME = "IMEEKIPE";
     private static final double C = Math.sqrt(2); /* constant in UCT function */
-    private static final int n = 100; /* number of iterations */
+    private static final int n = 1000; /* number of iterations */
 
     public HashMap<TreeIndex, TreeEntry> tree;
 
@@ -23,23 +23,29 @@ public class Inteligenca extends KdoIgra {
     }
 
     public Poteza izberiPotezo(Igra igra) {
+        System.out.println("Choosing a move");
         tree = new HashMap<TreeIndex, TreeEntry>();
         TreeEntry startNode = new TreeEntry(igra);
         TreeIndex startPath = new TreeIndex();
         tree.put(startPath, startNode);
         int i = 0;
         while (i < n) {
+            System.out.println("Iteration " + i);
             traverse(startNode, startPath);
             i++;
         }
+        System.out.println("Move chosen");
         return bestMove(startPath, tree.get(startPath));
     }
 
 
-    private static Random random1 = new Random ();
+    private static final Random random1 = new Random ();
 
     private void traverse(TreeEntry node, TreeIndex path){
+        if (node == null)
+        System.out.println("Starting traverse");
         if (fullyExpanded(node, path)) {
+            System.out.println("Fully expanded, choosing UCT");
             double maxUCT = 0;
             TreeIndex maxPath = null;
             TreeEntry maxNode = null;
@@ -56,14 +62,15 @@ public class Inteligenca extends KdoIgra {
             traverse(maxNode, maxPath);
         }
         else {
-            HashMap<TreeIndex, TreeEntry> unvisited = new HashMap<TreeIndex, TreeEntry>();
+            System.out.println("Not fully expanded, choosing random");
+            HashMap<TreeIndex, TreeEntry> unvisited = new HashMap<>();
             for (Map.Entry<TreeIndex, TreeEntry> child: children(path, node).entrySet()) {
                 if (!visited(child.getValue())) unvisited.put(child.getKey(), child.getValue());
             }
             int randomIndex = random1.nextInt(unvisited.size());
             TreeIndex chosenPath = (TreeIndex) unvisited.keySet().toArray()[randomIndex];
             TreeEntry chosenNode = unvisited.get(chosenPath);
-            Status result = rollout(chosenNode);
+            Status result = rollout(chosenPath, chosenNode);
             backpropagation(chosenPath, chosenNode, result);
         }
     }
@@ -73,6 +80,7 @@ public class Inteligenca extends KdoIgra {
     }
 
     private boolean fullyExpanded(TreeEntry node, TreeIndex path){
+        if (node == null) return true; /*TODO: deal with leaf nodes */
         Set<Poteza> possibleMoves = node.game.possibleMoves.keySet();
         if (possibleMoves.isEmpty()) return true;
         for (Poteza p: possibleMoves) {
@@ -96,7 +104,7 @@ public class Inteligenca extends KdoIgra {
     private void backpropagation(TreeIndex path, TreeEntry node, Status status){
         node.visits += 1;
         Player player = node.game.getPlayer();
-        if (player == Player.WHITE && status == Status.WHITE_WINS || player == Player.BLACK && status == Status.BLACK_WINS) node.wins += 1;
+        if (player.status(status)) node.wins += 1;
         if (tree.containsKey(path)) tree.replace(path, node);
         else tree.put(path, node);
         if (!path.isRoot()) {
@@ -106,7 +114,7 @@ public class Inteligenca extends KdoIgra {
         }
     }
 
-    private static Random random2 = new Random ();
+    private static final Random random2 = new Random ();
 
     private Poteza rolloutPolicy(Igra game){
         Set<Poteza> possibleMoves = game.possibleMoves.keySet();
@@ -119,12 +127,19 @@ public class Inteligenca extends KdoIgra {
      * @param node starting node
      * @return result of the game
      */
-    private Status rollout(TreeEntry node){
+    private Status rollout(TreeIndex path, TreeEntry node){
+        System.out.println("Starting rollout");
         Igra nextGame = node.game.copyOf();
+        nextGame.odigraj(path.lastMove());
         while (nextGame.status.equals(Status.IN_PROGRESS)) {
+            System.out.println("Choosing a move, possible: " + nextGame.possibleMoves);
             Poteza move = rolloutPolicy(nextGame);
-            nextGame.odigraj(move);
+            System.out.println("Chosen move " + move);
+            boolean played = nextGame.odigraj(move);
+            assert played; // TODO: Continue here
+            System.out.println("Move played");
         }
+        System.out.println("Game ended: " + nextGame.status);
         return nextGame.status;
     }
 
@@ -136,13 +151,17 @@ public class Inteligenca extends KdoIgra {
      */
     public HashMap<TreeIndex, TreeEntry> children(TreeIndex path, TreeEntry node){
         Set<Poteza> possibleMoves = node.game.possibleMoves.keySet();
-        HashMap<TreeIndex, TreeEntry> children = new HashMap<TreeIndex, TreeEntry>();
+        HashMap<TreeIndex, TreeEntry> children = new HashMap<>();
         for (Poteza p: possibleMoves) {
             TreeIndex childPath = path.child(p);
             if (tree.containsKey(childPath)) {
                 children.put(childPath, tree.get(childPath));
             }
-            else children.put(childPath, new TreeEntry(node.game.copyOf()));
+            else {
+                Igra nextGame = node.game.copyOf();
+                nextGame.odigraj(p);
+                children.put(childPath, new TreeEntry(nextGame));
+            }
         }
         return children;
     }

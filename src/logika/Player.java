@@ -1,5 +1,7 @@
 package logika;
 
+import coordinator.PlayerType;
+
 import java.awt.*;
 
 public enum Player {
@@ -15,6 +17,13 @@ public enum Player {
     @Override
     public String toString() {
         return playerName;
+    }
+
+    public boolean status(Object o) {
+        if (o.getClass() != Status.class) {
+            return false;
+        }
+        return this == Player.WHITE && o == Status.WHITE_WINS || this == Player.BLACK && o == Status.BLACK_WINS;
     }
 
     public Color getColour() {

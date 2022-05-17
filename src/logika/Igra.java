@@ -63,6 +63,7 @@ public class Igra {
                 boundary.add(new Poteza(i, j));
             }
         }
+        updatePossibleMoves();
     }
 
 
@@ -77,14 +78,15 @@ public class Igra {
     public void updateBoundary(Poteza poteza) {
         int x = poteza.x();
         int y = poteza.y();
-        for (int i = x - 1; i < x + 2; i++) {
-            for (int j = y - 1; j < y + 2; j++) {
-                try {
-                    if (board[i][j] == null) boundary.add(new Poteza(i, j));
-                } catch (ArrayIndexOutOfBoundsException ignored) {
-                    // ignore out-of-bounds checks
+
+        for (Direction d: allDirections) {
+            int dx = d.getX();
+            int dy = d.getY();
+            try {
+                if (board[x + dx][y + dy] == null) {
+                    boundary.add(new Poteza(x + dx, y + dy));
                 }
-            }
+            } catch (ArrayIndexOutOfBoundsException ignored) {}
         }
         boundary.remove(poteza);
         updatePossibleMoves();
@@ -262,8 +264,8 @@ public class Igra {
             cp.board[i] = Arrays.copyOf(this.board[i], this.board[i].length);
         }
         cp.player = player;
-        cp.boundary = boundary;
-        cp.possibleMoves = possibleMoves;
+        cp.boundary = new HashSet<>(boundary);
+        cp.possibleMoves = Map.copyOf(possibleMoves);
         cp.status = status;
         return cp;
     }
