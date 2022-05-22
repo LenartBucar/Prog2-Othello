@@ -9,6 +9,8 @@ import splosno.Poteza;
 
 import java.util.*;
 
+import static logika.Status.IN_PROGRESS;
+
 
 public class Inteligenca extends KdoIgra {
 
@@ -42,36 +44,38 @@ public class Inteligenca extends KdoIgra {
     private static final Random random1 = new Random ();
 
     private void traverse(TreeEntry node, TreeIndex path){
-        if (node == null)
-        System.out.println("Starting traverse");
-        if (fullyExpanded(node, path)) {
-            System.out.println("Fully expanded, choosing UCT");
-            double maxUCT = 0;
-            TreeIndex maxPath = null;
-            TreeEntry maxNode = null;
-            for (Map.Entry<TreeIndex, TreeEntry> child: children(path, node).entrySet()) {
-                TreeIndex childPath = child.getKey();
-                TreeEntry childNode = child.getValue();
-                double uct = getUCT(childNode, node);
-                if (uct > maxUCT) {
-                    maxUCT = uct;
-                    maxNode = childNode;
-                    maxPath = childPath;
+        if (node.game.status == IN_PROGRESS) {
+            System.out.println("Starting traverse");
+            if (fullyExpanded(node, path)) {
+                System.out.println("Fully expanded, choosing UCT");
+                double maxUCT = 0;
+                TreeIndex maxPath = null;
+                TreeEntry maxNode = null;
+                for (Map.Entry<TreeIndex, TreeEntry> child : children(path, node).entrySet()) {
+                    TreeIndex childPath = child.getKey();
+                    TreeEntry childNode = child.getValue();
+                    double uct = getUCT(childNode, node);
+                    if (uct >= maxUCT) {
+                        maxUCT = uct;
+                        maxNode = childNode;
+                        maxPath = childPath;
+                    }
                 }
+                assert maxNode != null;
+                traverse(maxNode, maxPath);
             }
-            traverse(maxNode, maxPath);
-        }
-        else {
-            System.out.println("Not fully expanded, choosing random");
-            HashMap<TreeIndex, TreeEntry> unvisited = new HashMap<>();
-            for (Map.Entry<TreeIndex, TreeEntry> child: children(path, node).entrySet()) {
-                if (!visited(child.getValue())) unvisited.put(child.getKey(), child.getValue());
+            else {
+                System.out.println("Not fully expanded, choosing random");
+                HashMap<TreeIndex, TreeEntry> unvisited = new HashMap<>();
+                for (Map.Entry<TreeIndex, TreeEntry> child : children(path, node).entrySet()) {
+                    if (!visited(child.getValue())) unvisited.put(child.getKey(), child.getValue());
+                }
+                int randomIndex = random1.nextInt(unvisited.size());
+                TreeIndex chosenPath = (TreeIndex) unvisited.keySet().toArray()[randomIndex];
+                TreeEntry chosenNode = unvisited.get(chosenPath);
+                Status result = rollout(chosenPath, chosenNode);
+                backpropagation(chosenPath, chosenNode, result);
             }
-            int randomIndex = random1.nextInt(unvisited.size());
-            TreeIndex chosenPath = (TreeIndex) unvisited.keySet().toArray()[randomIndex];
-            TreeEntry chosenNode = unvisited.get(chosenPath);
-            Status result = rollout(chosenPath, chosenNode);
-            backpropagation(chosenPath, chosenNode, result);
         }
     }
 
@@ -92,6 +96,9 @@ public class Inteligenca extends KdoIgra {
 
 
     private double getUCT(TreeEntry child, TreeEntry parent){
+        if (child.game.getPlayer() == parent.game.getPlayer()) {
+            return child.wins / child.visits + C * Math.sqrt(Math.log(parent.visits) / child.visits);
+        }
         return (child.visits - child.wins) / child.visits + C * Math.sqrt(Math.log(parent.visits) / child.visits);
     }
 
@@ -131,7 +138,7 @@ public class Inteligenca extends KdoIgra {
         System.out.println("Starting rollout");
         Igra nextGame = node.game.copyOf();
         nextGame.odigraj(path.lastMove());
-        while (nextGame.status.equals(Status.IN_PROGRESS)) {
+        while (nextGame.status.equals(IN_PROGRESS)) {
             System.out.println("Choosing a move, possible: " + nextGame.possibleMoves);
             Poteza move = rolloutPolicy(nextGame);
             System.out.println("Chosen move " + move);
