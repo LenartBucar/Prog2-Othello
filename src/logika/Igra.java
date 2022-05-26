@@ -36,12 +36,6 @@ public class Igra {
         return board;
     }
 
-    public Status getStatus(){
-        return status;
-    }
-
-    public Set<Poteza> getBoundary() {return boundary; }
-
     public Igra(int x, int y) {
         sizeX = x;
         sizeY = y;
@@ -86,7 +80,7 @@ public class Igra {
                 if (board[x + dx][y + dy] == null) {
                     boundary.add(new Poteza(x + dx, y + dy));
                 }
-            } catch (ArrayIndexOutOfBoundsException ignored) {}
+            } catch (ArrayIndexOutOfBoundsException ignored) { /* out of bounds, skip */ }
         }
         boundary.remove(poteza);
         updatePossibleMoves();

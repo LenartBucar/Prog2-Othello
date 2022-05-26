@@ -1,6 +1,5 @@
 package inteligenca;
 
-import com.sun.source.tree.Tree;
 import logika.Igra;
 import logika.Player;
 import logika.Status;
@@ -8,6 +7,7 @@ import splosno.KdoIgra;
 import splosno.Poteza;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import static logika.Status.IN_PROGRESS;
 
@@ -16,66 +16,66 @@ public class Inteligenca extends KdoIgra {
 
     private static final String TEAMNAME = "IMEEKIPE";
     private static final double C = Math.sqrt(2); /* constant in UCT function */
-    private static final int n = 1000; /* number of iterations */
+    private static final int MOVE_TIME_SEC = 4; /* Amount of time per move */
 
-    public HashMap<TreeIndex, TreeEntry> tree;
+    private Map<TreeIndex, TreeEntry> tree;
 
     public Inteligenca() {
         super(TEAMNAME);
     }
 
+    /** Selects the best move for a given game
+     * @param igra game, for which the move should be selected
+     * @return move to be played
+     */
     public Poteza izberiPotezo(Igra igra) {
-        System.out.println("Choosing a move");
-        tree = new HashMap<TreeIndex, TreeEntry>();
+        if (igra.possibleMoves.size() == 1) return (Poteza) igra.possibleMoves.keySet().toArray()[0];  /* If only one move is possible, play that move */
+        tree = new HashMap<>();
         TreeEntry startNode = new TreeEntry(igra);
         TreeIndex startPath = new TreeIndex();
         tree.put(startPath, startNode);
-        int i = 0;
-        while (i < n) {
-            System.out.println("Iteration " + i);
-            traverse(startNode, startPath);
-            i++;
+        for (long stop = System.nanoTime() + TimeUnit.SECONDS.toNanos(MOVE_TIME_SEC); System.nanoTime() < stop;) {
+            traverse(startNode,startPath);
         }
-        System.out.println("Move chosen");
         return bestMove(startPath, tree.get(startPath));
     }
 
 
     private static final Random random1 = new Random ();
 
+    /** Traverses the possible moves, performs MCTS
+     * @param node starting node
+     * @param path path to the starting node
+     */
     private void traverse(TreeEntry node, TreeIndex path){
-        if (node.game.status == IN_PROGRESS) {
-            System.out.println("Starting traverse");
-            if (fullyExpanded(node, path)) {
-                System.out.println("Fully expanded, choosing UCT");
-                double maxUCT = 0;
-                TreeIndex maxPath = null;
-                TreeEntry maxNode = null;
-                for (Map.Entry<TreeIndex, TreeEntry> child : children(path, node).entrySet()) {
-                    TreeIndex childPath = child.getKey();
-                    TreeEntry childNode = child.getValue();
-                    double uct = getUCT(childNode, node);
-                    if (uct >= maxUCT) {
-                        maxUCT = uct;
-                        maxNode = childNode;
-                        maxPath = childPath;
-                    }
+        if (node.game.status != IN_PROGRESS) return;
+        if (fullyExpanded(node, path)) {  /* Check the node with the max UCT */
+            double maxUCT = 0;
+            TreeIndex maxPath = null;
+            TreeEntry maxNode = null;
+            for (Map.Entry<TreeIndex, TreeEntry> child : children(path, node).entrySet()) {
+                TreeIndex childPath = child.getKey();
+                TreeEntry childNode = child.getValue();
+                double uct = getUCT(childNode, node);
+                if (uct >= maxUCT) {
+                    maxUCT = uct;
+                    maxNode = childNode;
+                    maxPath = childPath;
                 }
-                assert maxNode != null;
-                traverse(maxNode, maxPath);
             }
-            else {
-                System.out.println("Not fully expanded, choosing random");
-                HashMap<TreeIndex, TreeEntry> unvisited = new HashMap<>();
-                for (Map.Entry<TreeIndex, TreeEntry> child : children(path, node).entrySet()) {
-                    if (!visited(child.getValue())) unvisited.put(child.getKey(), child.getValue());
-                }
-                int randomIndex = random1.nextInt(unvisited.size());
-                TreeIndex chosenPath = (TreeIndex) unvisited.keySet().toArray()[randomIndex];
-                TreeEntry chosenNode = unvisited.get(chosenPath);
-                Status result = rollout(chosenPath, chosenNode);
-                backpropagation(chosenPath, chosenNode, result);
+            assert maxNode != null;
+            traverse(maxNode, maxPath);
+        }
+        else {  /* pick a random unexplored node */
+            HashMap<TreeIndex, TreeEntry> unvisited = new HashMap<>();
+            for (Map.Entry<TreeIndex, TreeEntry> child : children(path, node).entrySet()) {
+                if (!visited(child.getValue())) unvisited.put(child.getKey(), child.getValue());
             }
+            int randomIndex = random1.nextInt(unvisited.size());
+            TreeIndex chosenPath = (TreeIndex) unvisited.keySet().toArray()[randomIndex];
+            TreeEntry chosenNode = unvisited.get(chosenPath);
+            Status result = rollout(chosenPath, chosenNode);
+            backpropagation(chosenPath, chosenNode, result);
         }
     }
 
@@ -84,7 +84,7 @@ public class Inteligenca extends KdoIgra {
     }
 
     private boolean fullyExpanded(TreeEntry node, TreeIndex path){
-        if (node == null) return true; /*TODO: deal with leaf nodes */
+        if (node == null) return true;
         Set<Poteza> possibleMoves = node.game.possibleMoves.keySet();
         if (possibleMoves.isEmpty()) return true;
         for (Poteza p: possibleMoves) {
@@ -95,6 +95,11 @@ public class Inteligenca extends KdoIgra {
     }
 
 
+    /** Calculates UCT score for the given node
+     * @param child node
+     * @param parent path to the node
+     * @return UCT score
+     */
     private double getUCT(TreeEntry child, TreeEntry parent){
         if (child.game.getPlayer() == parent.game.getPlayer()) {
             return child.wins / child.visits + C * Math.sqrt(Math.log(parent.visits) / child.visits);
@@ -123,6 +128,10 @@ public class Inteligenca extends KdoIgra {
 
     private static final Random random2 = new Random ();
 
+    /** Chooses which move to make, when MCTS is reaching the position for the first time (selects random move)
+     * @param game game, where the move should be selected
+     * @return selected move
+     */
     private Poteza rolloutPolicy(Igra game){
         Set<Poteza> possibleMoves = game.possibleMoves.keySet();
         int randomIndex = random2.nextInt(possibleMoves.size());
@@ -135,28 +144,23 @@ public class Inteligenca extends KdoIgra {
      * @return result of the game
      */
     private Status rollout(TreeIndex path, TreeEntry node){
-        System.out.println("Starting rollout");
         Igra nextGame = node.game.copyOf();
         nextGame.odigraj(path.lastMove());
         while (nextGame.status.equals(IN_PROGRESS)) {
-            System.out.println("Choosing a move, possible: " + nextGame.possibleMoves);
             Poteza move = rolloutPolicy(nextGame);
-            System.out.println("Chosen move " + move);
             boolean played = nextGame.odigraj(move);
-            assert played; // TODO: Continue here
-            System.out.println("Move played");
+            assert played;
         }
-        System.out.println("Game ended: " + nextGame.status);
         return nextGame.status;
     }
 
     /**
      *
-     * @param path
-     * @param node
+     * @param path path to the parent node
+     * @param node parent node
      * @return all children nodes of a given node
      */
-    public HashMap<TreeIndex, TreeEntry> children(TreeIndex path, TreeEntry node){
+    public Map<TreeIndex, TreeEntry> children(TreeIndex path, TreeEntry node){
         Set<Poteza> possibleMoves = node.game.possibleMoves.keySet();
         HashMap<TreeIndex, TreeEntry> children = new HashMap<>();
         for (Poteza p: possibleMoves) {
@@ -175,8 +179,8 @@ public class Inteligenca extends KdoIgra {
 
     /**
      *
-     * @param path
-     * @param node
+     * @param path path to the parent node
+     * @param node parent node
      * @return move which was explored the most durint MCTS
      */
     private Poteza bestMove(TreeIndex path, TreeEntry node){
@@ -191,5 +195,4 @@ public class Inteligenca extends KdoIgra {
         assert maxPath != null;
         return maxPath.lastMove();
     }
-    /* TODO: what to do if maxPath == null */
 }

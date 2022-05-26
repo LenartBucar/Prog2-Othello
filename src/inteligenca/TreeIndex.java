@@ -2,7 +2,6 @@ package inteligenca;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 
 import splosno.Poteza;
 
@@ -12,12 +11,12 @@ public final class TreeIndex {
 	private final LinkedList<Poteza> potList;
 	
 	public TreeIndex () {
-		this.potList = new LinkedList<Poteza> ();
+		this.potList = new LinkedList<> ();
 	}
 
 	public TreeIndex (TreeIndex ti, Poteza p) {
 		// Append p to a deep copy of ti
-		this.potList = new LinkedList<Poteza>();
+		this.potList = new LinkedList<>();
 		for (Poteza q : ti.potList) this.potList.addLast(q);
 		this.potList.addLast(p);
 	}

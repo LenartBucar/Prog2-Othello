@@ -41,10 +41,6 @@ public class Canvas extends JPanel implements MouseListener, MouseMotionListener
         setFocusable(true);
     }
 
-    private int round(double a) {
-        return (int)Math.round(a);
-    }
-
     public void setGame(Igra g) {
         this.game = g;
         repaint();
@@ -127,46 +123,42 @@ public class Canvas extends JPanel implements MouseListener, MouseMotionListener
 
     @Override
     public void mousePressed(MouseEvent e) {
-        if (this.game == null) return;
+        /* unused */
 
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
-        if (this.game == null) return;
-        repaint();
+        /* unused */
 
     }
 
     @Override
     public void mouseEntered(MouseEvent e) {
-        if (this.game == null) return;
+        /* unused */
 
     }
 
     @Override
     public void mouseExited(MouseEvent e) {
-        if (this.game == null) return;
+        /* unused */
 
     }
 
     @Override
     public void mouseDragged(MouseEvent e) {
-        if (this.game == null) return;
-        repaint();
+        /* unused */
 
     }
 
     @Override
     public void mouseMoved(MouseEvent e) {
-        if (this.game == null) return;
-
+        /* unused */
     }
 
     @Override
     public void keyTyped(KeyEvent e) {
-        if (this.game == null) return;
-
+        /* unused */
     }
 
     @Override

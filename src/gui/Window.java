@@ -2,7 +2,6 @@ package gui;
 
 import coordinator.Coordinator;
 import coordinator.PlayerType;
-import logika.Igra;
 import logika.Player;
 import splosno.KdoIgra;
 
@@ -10,7 +9,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.WindowEvent;
 import java.util.EnumMap;
 
 public class Window extends JFrame implements ActionListener {
@@ -49,22 +47,21 @@ public class Window extends JFrame implements ActionListener {
         igraRacunalnikRacunalnik = addMenuItem(gameMenu, "Računalnik – računalnik");
 
 
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
     }
 
     public void refreshGUI() {
         if (canvas.game == null) { status.setText("Nova igra!"); }
         else {
-            switch(canvas.game.status) {
-                case IN_PROGRESS: status.setText("Na potezi je " + canvas.game.getPlayer().toString()); break;
-                case DRAW: status.setText("Neodloceno!"); break;
-                case BLACK_WINS: status.setText("Zmaga črni igralec!"); break;
-                case WHITE_WINS: status.setText("Zmaga beli igralec!"); break;
+            switch (canvas.game.status) {
+                case IN_PROGRESS -> status.setText("Na potezi je " + canvas.game.getPlayer().toString());
+                case DRAW -> status.setText("Neodloceno!");
+                case BLACK_WINS -> status.setText("Zmaga črni igralec!");
+                case WHITE_WINS -> status.setText("Zmaga beli igralec!");
             }
         }
         canvas.repaint();
     }
-    /*TODO: replace repaint with refreshGUI */
 
     private JMenu addMenu(JMenuBar menuBar, String title) {
         JMenu menu = new JMenu(title);
@@ -77,17 +74,7 @@ public class Window extends JFrame implements ActionListener {
         menuItem.addActionListener(this);
         return menuItem;
     }
-    
-    private Integer getInt(String message) {
-        String val = JOptionPane.showInputDialog(this, message);
-        try
-        {
-            return Integer.parseInt(val);
-        }
-        catch(Exception exc) {
-            return null;
-        }
-    }
+
 
     @Override
     public void actionPerformed(ActionEvent e) {

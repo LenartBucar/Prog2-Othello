@@ -9,7 +9,6 @@ import splosno.Poteza;
 
 import javax.swing.*;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 public class Coordinator {
@@ -41,24 +40,13 @@ public class Coordinator {
             case IN_PROGRESS:
                 Player player = game.getPlayer();
                 PlayerType playerType = playerTypeMap.get(player);
-                switch (playerType) {
-                    case C -> playComputerMove();
-                    case H -> HumanTurn = true;
-                }
+                if (playerType == PlayerType.C) playComputerMove();
+                else HumanTurn = true;
+                break;
+            default:
+                throw new IllegalStateException("Unexpected value: " + game.status);
         }
     }
-
-    private final static Random random = new Random();
-/*
-    public static void playComputerMove(Igra game) {
-        Poteza[] possibleMoves = game.allPossible().keySet().toArray(new Poteza[0]);
-        int randomIndex = random.nextInt(possibleMoves.length);
-        Poteza move = possibleMoves[randomIndex];
-        game.odigraj(move);
-        play();
-    }
-
- */
 
     public static void playComputerMove() {
         Igra zacetnaIgra = game;
@@ -66,15 +54,12 @@ public class Coordinator {
             @Override
             protected Void doInBackground() {
                 try {
-                    TimeUnit.SECONDS.sleep(1);} catch (Exception ignored) {};
+                    TimeUnit.SECONDS.sleep(1);} catch (Exception ignored) {}
                 return null;
             }
             @Override
             protected void done () {
                 if (game != zacetnaIgra) return;
-//                Poteza[] possibleMoves = game.getPossibleMoves().keySet().toArray(new Poteza[0]);
-//                int randomIndex = random.nextInt(possibleMoves.length);
-//                Poteza poteza = possibleMoves[randomIndex];
                 Poteza poteza = inteligenca.izberiPotezo(game);
                 game.odigraj(poteza);
                 play();
